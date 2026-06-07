@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from src.logging_config import configure_logging
 from src.middleware.request_context import RequestContextMiddleware
+from src.routes import accounts, admin, market, orders
 
 load_dotenv()
 configure_logging()
@@ -16,6 +17,11 @@ app = FastAPI(
 )
 
 app.add_middleware(RequestContextMiddleware)
+
+app.include_router(accounts.router)
+app.include_router(orders.router)
+app.include_router(market.router)
+app.include_router(admin.router)
 
 
 @app.get("/health")
