@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node (in case of tooling)
+node_modules/
+
+# Env + secrets
+.env
+.env.local
+
+# OS
+.DS_Store
+
+# Coverage / build artifacts
+coverage/
+htmlcov/
+dist/
+build/
+
+# Grafana / Prometheus runtime data
+observability/grafana/data/
+observability/prometheus/data/
