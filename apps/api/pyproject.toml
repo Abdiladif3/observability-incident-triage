@@ -7,6 +7,7 @@ dependencies = [
     "fastapi>=0.118",
     "uvicorn[standard]>=0.34",
     "python-dotenv>=1.1",
+    "structlog>=24.4",
 ]
 
 [project.optional-dependencies]
