@@ -1,0 +1,20 @@
+[project]
+name = "acme-trading-api"
+version = "0.1.0"
+description = "Instrumented backend API for the Observability & Incident Triage SE demo."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.118",
+    "uvicorn[standard]>=0.34",
+    "python-dotenv>=1.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "httpx>=0.28",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
