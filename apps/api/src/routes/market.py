@@ -1,21 +1,26 @@
 """Market data endpoints."""
 
 from datetime import UTC, datetime
+from decimal import Decimal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
-from src.data.store import quotes
 from src.models.domain import MarketStatus, Quote
+from src.services.downstream import fetch_quote
 
 router = APIRouter(prefix="/market", tags=["market"])
 
 
 @router.get("/quote/{symbol}", response_model=Quote)
-def get_quote(symbol: str) -> Quote:
-    quote = quotes.get(symbol.upper())
-    if quote is None:
-        raise HTTPException(status_code=404, detail=f"No quote available for symbol '{symbol}'")
-    return quote
+async def get_quote(symbol: str) -> Quote:
+    data = await fetch_quote(symbol)
+    return Quote(
+        symbol=data["symbol"],
+        bid=Decimal(data["bid"]),
+        ask=Decimal(data["ask"]),
+        last=Decimal(data["last"]),
+        as_of=datetime.fromisoformat(data["as_of"]),
+    )
 
 
 @router.get("/status", response_model=MarketStatus)

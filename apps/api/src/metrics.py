@@ -26,6 +26,21 @@ http_requests_in_flight = Gauge(
     "Number of HTTP requests currently being handled.",
 )
 
+# ---- Downstream call metrics ----
+
+downstream_requests_total = Counter(
+    "downstream_requests_total",
+    "Total downstream requests issued from the API, labeled by target and outcome.",
+    labelnames=["target", "status"],
+)
+
+downstream_request_duration_seconds = Histogram(
+    "downstream_request_duration_seconds",
+    "Duration of downstream calls in seconds, labeled by target.",
+    labelnames=["target"],
+    buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
+)
+
 # ---- Business metrics ----
 
 orders_submitted_total = Counter(

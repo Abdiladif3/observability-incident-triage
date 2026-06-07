@@ -5,8 +5,9 @@ from decimal import Decimal
 import structlog
 from fastapi import APIRouter, HTTPException
 
-from src.data.store import accounts, quotes
+from src.data.store import accounts
 from src.models.domain import AccountStatus, RiskCheckRequest, RiskCheckResult
+from src.services.downstream import fetch_quote
 
 log = structlog.get_logger("api.admin")
 
@@ -16,16 +17,15 @@ POSITION_SIZE_LIMIT = 10_000
 
 
 @router.post("/risk-check", response_model=RiskCheckResult)
-def risk_check(payload: RiskCheckRequest) -> RiskCheckResult:
+async def risk_check(payload: RiskCheckRequest) -> RiskCheckResult:
     account = accounts.get(payload.account_id)
     if account is None:
         raise HTTPException(status_code=404, detail=f"Account '{payload.account_id}' not found")
 
-    quote = quotes.get(payload.symbol.upper())
-    if quote is None:
-        raise HTTPException(status_code=404, detail=f"No quote available for symbol '{payload.symbol}'")
+    quote_data = await fetch_quote(payload.symbol.upper())
+    ask = Decimal(quote_data["ask"])
 
-    margin_required = (quote.ask * Decimal(payload.quantity)).quantize(Decimal("0.01"))
+    margin_required = (ask * Decimal(payload.quantity)).quantize(Decimal("0.01"))
     buying_power_after = (account.buying_power - margin_required).quantize(Decimal("0.01"))
 
     checks_passed: list[str] = []
