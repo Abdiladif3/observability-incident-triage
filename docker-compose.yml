@@ -1,0 +1,70 @@
+services:
+  downstream:
+    build:
+      context: ./apps/downstream
+    container_name: downstream
+    ports:
+      - "8001:8001"
+    environment:
+      PORT: 8001
+      SERVICE_NAME: downstream
+      ENV: docker
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health').read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  api:
+    build:
+      context: ./apps/api
+    container_name: api
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: 8000
+      SERVICE_NAME: api
+      ENV: docker
+      DOWNSTREAM_BASE_URL: http://downstream:8001
+      DOWNSTREAM_TIMEOUT_SECONDS: 2
+    depends_on:
+      downstream:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=1h
+      - --web.enable-lifecycle
+    depends_on:
+      - api
+      - downstream
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
