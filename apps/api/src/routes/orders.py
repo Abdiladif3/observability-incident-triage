@@ -7,6 +7,7 @@ import structlog
 from fastapi import APIRouter, HTTPException
 
 from src.data.store import accounts, orders
+from src.metrics import orders_submitted_total
 from src.models.domain import CreateOrderRequest, Order, OrderStatus, OrderType
 
 log = structlog.get_logger("api.orders")
@@ -35,6 +36,8 @@ def submit_order(payload: CreateOrderRequest) -> Order:
         submitted_at=datetime.now(UTC),
     )
     orders[order_id] = order
+
+    orders_submitted_total.labels(side=payload.side.value, symbol=order.symbol).inc()
 
     log.info(
         "order.submitted",
